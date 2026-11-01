@@ -1,0 +1,143 @@
+{
+  "version": 1,
+  "lastModified": "2026-11-01T17:16:54.496Z",
+  "config": {
+    "taxRate": 0.08,
+    "matchDistanceThreshold": 2,
+    "storeName": "CartMate Smart Grocery",
+    "currencySymbol": "$",
+    "autoScanCooldownMs": 1600
+  },
+  "products": [
+    {
+      "id": 1,
+      "name": "Fresh Cavendish Bananas (each)",
+      "price": 59,
+      "barcode": "4006381333931",
+      "visionLabel": "banana",
+      "category": "Produce",
+      "taxable": false,
+      "ageRestricted": false,
+      "stock": 65,
+      "imageUrl": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.140Z"
+    },
+    {
+      "id": 2,
+      "name": "Honeycrisp Apple (each)",
+      "price": 89,
+      "barcode": "0012345678905",
+      "visionLabel": "apple",
+      "category": "Produce",
+      "taxable": false,
+      "ageRestricted": false,
+      "stock": 82,
+      "imageUrl": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.141Z"
+    },
+    {
+      "id": 3,
+      "name": "Valencia Orange (each)",
+      "price": 79,
+      "barcode": "2000000000039",
+      "visionLabel": "orange",
+      "category": "Produce",
+      "taxable": false,
+      "ageRestricted": false,
+      "stock": 74,
+      "imageUrl": "https://images.unsplash.com/photo-1547514701-42782101795e?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.141Z"
+    },
+    {
+      "id": 4,
+      "name": "Artisan Lemon (each)",
+      "price": 69,
+      "barcode": "2000000000046",
+      "visionLabel": "lemon",
+      "category": "Produce",
+      "taxable": false,
+      "ageRestricted": false,
+      "stock": 50,
+      "imageUrl": "https://images.unsplash.com/photo-1533038590840-1cde6e668a91?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.141Z"
+    },
+    {
+      "id": 5,
+      "name": "Spring Water 500ml",
+      "price": 149,
+      "barcode": "5449000000996",
+      "visionLabel": "bottle",
+      "category": "Beverages",
+      "taxable": true,
+      "ageRestricted": false,
+      "stock": 120,
+      "imageUrl": "https://images.unsplash.com/photo-1559839914-ba2ae90d165f?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.141Z"
+    },
+    {
+      "id": 6,
+      "name": "Craft IPA 6-Pack",
+      "price": 1199,
+      "barcode": "5012345678900",
+      "visionLabel": "beer_pack",
+      "category": "Alcohol & Spirits",
+      "taxable": true,
+      "ageRestricted": true,
+      "stock": 24,
+      "imageUrl": "https://images.unsplash.com/photo-1608270199042-e14b0b1341c2?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.141Z"
+    },
+    {
+      "id": 7,
+      "name": "Organic Whole Milk 1L",
+      "price": 349,
+      "barcode": "2000000000077",
+      "visionLabel": "milk",
+      "category": "Dairy",
+      "taxable": false,
+      "ageRestricted": false,
+      "stock": 45,
+      "imageUrl": "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.141Z"
+    },
+    {
+      "id": 8,
+      "name": "Fresh Sourdough Bread Loaf",
+      "price": 429,
+      "barcode": "2000000000084",
+      "visionLabel": "bread",
+      "category": "Bakery",
+      "taxable": false,
+      "ageRestricted": false,
+      "stock": 18,
+      "imageUrl": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200&auto=format&fit=crop&q=80",
+      "lastUpdated": "2026-11-01T16:40:27.141Z"
+    },
+    {
+      "id": 9,
+      "name": "Organic Haas Avocado",
+      "price": 149,
+      "barcode": "2000000000091",
+      "visionLabel": "avocado",
+      "category": "Produce",
+      "taxable": false,
+      "ageRestricted": false,
+      "stock": 40,
+      "imageUrl": "",
+      "lastUpdated": "2026-11-01T16:40:38.919Z"
+    }
+  ],
+  "visionSamples": [],
+  "transactions": [],
+  "recentScans": [],
+  "devices": [
+    {
+      "id": "dev_mvy370og_9ghs",
+      "name": "Kiosk Terminal #9ghs",
+      "role": "kiosk",
+      "lastSeen": 1793553414496,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)",
+      "ip": "2.51.86.8, 169.254.169.126"
+    }
+  ]
+}

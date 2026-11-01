@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grocery Self-Checkout Concept</title>
+<style>
+:root{--bg:#f4f6f8;--cd:#fff;--tx:#151a21;--mu:#667085;--bd:#dde1e6;--ac:#0b7a4b;--on:#fff;--bad:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1217;--cd:#171c23;--tx:#eef1f5;--mu:#9aa4b2;--bd:#2a313b;--ac:#34d399;--on:#06281a;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#0e1217;--cd:#171c23;--tx:#eef1f5;--mu:#9aa4b2;--bd:#2a313b;--ac:#34d399;--on:#06281a;--bad:#f87171}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+[hidden]{display:none!important}
+.wrap{max-width:1100px;margin:0 auto;padding:12px;display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:860px){.wrap{grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:start}}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:12px;min-width:0}
+button{font:inherit;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:8px;padding:8px 12px;cursor:pointer}
+button.p,.tabs .on{background:var(--ac);color:var(--on);border-color:var(--ac);font-weight:600}
+button.d{color:var(--bad)}
+input,textarea{font:inherit;padding:7px 9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);max-width:100%}
+table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;border-bottom:1px solid var(--bd);text-align:left;font-size:14px;vertical-align:middle}
+.sc{overflow-x:auto}.r{text-align:right}.mu{color:var(--mu)}.big{font-size:28px}.ok{color:var(--ac)}.bad{color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.cam{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:4/3}
+.cam video,.cam canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.mod{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:12px;z-index:9}.mod.on{display:flex}
+.mod>div{background:var(--cd);border-radius:14px;padding:16px;max-width:380px;width:100%;max-height:90vh;overflow:auto}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}.kp button{padding:12px;font-size:18px}
+#ts{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ac);color:var(--on);padding:8px 14px;border-radius:20px;opacity:0;pointer-events:none;transition:.2s;z-index:20}
+#ts.on{opacity:1}#ts.e{background:var(--bad);color:#fff}
+pre{white-space:pre-wrap;font:13px/1.35 ui-monospace,Menlo,Consolas,monospace}
+@media print{body *{visibility:hidden}#rx,#rx *{visibility:visible}#rx{position:absolute;left:0;top:0}}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:10px}
+.bc{background:#fff;color:#000;border:1px solid var(--bd);border-radius:8px;padding:8px;text-align:center;font-size:13px}.bc svg{width:100%;height:auto;display:block}
+@media print{body.pb #bl,body.pb #bl *{visibility:visible}body.pb #bl{position:absolute;left:0;top:0;width:100%}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+</head><body><div class="wrap">
+<section class="card">
+<div class="cam"><video id="v" playsinline muted></video><canvas id="o"></canvas></div>
+<p id="cm" class="mu" style="margin:6px 0 0">Camera is off. Needs https and your permission.</p>
+<div class="row"><button class="p" id="sc">Start camera</button>
+<label>Vision match distance <input type="range" id="md" min="0.5" max="5" step="0.1"> <b id="mv"></b></label></div>
+<div class="row"><input id="bi" inputmode="numeric" placeholder="Type a barcode"><button id="bb">Add</button></div>
+<p id="mc" style="margin:8px 0 0"></p>
+<p class="mu" style="font-size:13px;margin-bottom:0">The green square is the scan zone. Lower distance = stricter vision. All data stays in this browser.</p>
+</section>
+<section class="card">
+<div class="tabs" id="tb"><button class="on">Checkout</button><button>Products</button><button>Train AI</button><button>Reports</button><button>Barcodes</button></div>
+
+<div id="t0"><div class="sc"><table><tbody id="cl"></tbody></table></div><p id="tt"></p>
+<div class="row"><button class="p" id="pb">Cash out</button><button id="rb">Remove last</button><button id="cb">Clear</button></div></div>
+
+<div id="t1" hidden><div class="sc"><table><thead><tr><th>Product</th><th>Price $</th><th>Code / label</th><th>Stock</th><th></th></tr></thead><tbody id="pl"></tbody></table></div>
+<h4>Add product</h4><div class="row"><input id="an" placeholder="Name"><input id="ap" size="6" placeholder="Price 1.49"><input id="ac" placeholder="Barcode"><input id="al" placeholder="Vision label" list="ll"><input id="as" size="5" type="number" placeholder="Stock"></div>
+<div class="row"><label><input type="checkbox" id="at"> Taxable</label><label><input type="checkbox" id="aa"> 18+</label><button class="p" id="adb">Add</button></div>
+<div class="row"><label>Sales tax % <input id="tx" type="number" step="0.01" min="0" size="5"></label></div>
+<h4>Backup</h4><textarea id="bk" rows="3" style="width:100%" placeholder="Export fills this box; paste a backup and Import to restore"></textarea>
+<div class="row"><button id="ex">Export</button><button id="im">Import</button><button class="d" id="rst">Reset all data</button></div></div>
+
+<div id="t2" hidden><p><b>How to train:</b> 1) start the camera, 2) press <b>Train</b> on a row below, 3) hold that item in the green square and press <b>Start burst</b> while slowly turning it, 4) stop, change the lighting or background, and repeat 3 times per item. Do <b>_empty</b> first, then press <b>Test accuracy</b>.</p><div id="gd" class="sc"></div>
+<div class="row"><input id="lb2" list="ll" placeholder="Label e.g. banana"><button data-q="_empty">_empty</button><button data-q="_other">_other</button></div>
+<div class="row"><button class="p" id="bu">Start burst</button><button id="c1">Capture 1</button><button id="evb">Test accuracy</button></div>
+<datalist id="ll"></datalist><p id="tw" class="bad"></p>
+<table><thead><tr><th>Label</th><th>Images</th><th>Sessions</th><th></th></tr></thead><tbody id="tl"></tbody></table>
+<p id="ev"></p><p class="mu" style="font-size:13px">Accuracy test holds out whole sessions, so near-duplicate frames cannot flatter the score. This demo matches colour and layout (nearest neighbour); it suits distinct produce, not look-alike packaging. Use barcodes for packaged goods.</p></div>
+
+<div id="t3" hidden><div class="row"><input type="date" id="rd"><span id="rs"></span></div>
+<div class="sc"><table><thead><tr><th>Item</th><th>Qty</th><th class="r">Revenue</th></tr></thead><tbody id="ri"></tbody></table></div>
+<p id="rl" class="bad"></p><p>Receipts: <span id="rv"></span></p>
+<h4>Recent scans</h4><div class="sc"><table><tbody id="re"></tbody></table></div></div>
+
+<div id="t4" hidden><p>Scannable EAN-13 barcodes for your products. Point the camera at this screen (zoom the browser in if needed) or print the sheet. Products without a barcode can get a store-use one generated.</p>
+<div class="row"><button class="p" id="bg">Generate missing barcodes</button><button id="bp">Print sheet</button></div>
+<div class="row"><label>Scan a barcode from an image file <input type="file" id="bf" accept="image/*"></label><span id="bfr"></span></div>
+<div id="bl" class="bgrid"></div></div>
+</section></div>
+
+<div class="mod" id="m1"><div><h3 style="margin:0 0 6px">Cash payment</h3><div id="pd"></div>
+<div class="row" id="qk"><button data-q="x">Exact</button><button data-q="5">$5</button><button data-q="10">$10</button><button data-q="20">$20</button><button data-q="50">$50</button></div>
+<div class="kp" id="kp"></div><label id="agw"><input type="checkbox" id="ag"> Staff confirmed customer is 18+</label>
+<div class="row"><button class="p" id="ok">Complete sale</button><button id="xc">Back</button></div></div></div>
+<div class="mod" id="m2"><div><pre id="rx"></pre><div class="row"><button class="p" id="x2">Close</button><button id="pr">Print</button></div></div></div>
+<div id="ts"></div>
+
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S={g(k,d){try{const v=localStorage.getItem('gk_'+k);return v?JSON.parse(v):d}catch(e){return d}},s(k,v){try{localStorage.setItem('gk_'+k,JSON.stringify(v))}catch(e){toast('Browser storage is full or blocked',1)}}};
+const m$=c=>(c<0?'-':'')+'$'+(Math.abs(c)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const pp=t=>Math.round(parseFloat(t)*100+1e-7),nb=c=>{c=String(c).trim();return/^\d{12,13}$/.test(c)?c.padStart(13,'0'):c};
+const ean=c=>{if(!/^\d{13}$/.test(c))return true;let s=0;for(let i=0;i<12;i++)s+=+c[i]*(i%2?3:1);return(10-s%10)%10==+c[12]};
+const ld=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+let P=S.g('p',null)||[['Bananas (each)',59,'4006381333931','banana',0,0,60],['Apple (each)',89,'0012345678905','apple',0,0,80],['Orange (each)',79,'2000000000039','orange',0,0,70],['Spring Water 500ml',149,'5449000000996','bottle',1,0,120],['Craft Lager 6-pack',1199,'5012345678900','',1,1,24]].map((a,i)=>({id:i+1,name:a[0],price:a[1],bc:a[2],lb:a[3],tx:a[4],ag:a[5],st:a[6]}));
+P.forEach(p=>{if(!p.bc&&p.name=='Orange (each)'){p.bc='2000000000039';S.s('p',P)}});
+let SA=S.g('s',[]),SM=S.g('m',[]),EV=S.g('e',[]),CF=Object.assign({tax:0,md:2},S.g('c',{}));
+const sv=()=>{S.s('p',P);S.s('s',SA);S.s('m',SM);S.s('c',CF)};
+let cart=[],order=[],tab=0,vh=[],lat=null,busy=0,tk=0,bt=null,cash=0,tt;
+const prod=id=>P.find(p=>p.id==id);
+function toast(m,err){const t=$('#ts');t.textContent=m;t.className=err?'e on':'on';clearTimeout(tt);tt=setTimeout(()=>t.className='',2500)}
+function arm(b,f){if(b.dataset.a){delete b.dataset.a;f();return}const o=b.textContent;b.dataset.a=1;b.textContent='Sure?';setTimeout(()=>{delete b.dataset.a;b.textContent=o},3000)}
+function log(s,v,p){EV.push({t:Date.now(),s,v,p});if(EV.length>200)EV.shift();S.s('e',EV)}
+/* ---------- cart ---------- */
+function add(p,q=1,src='manual',val=''){const l=cart.find(x=>x.id==p.id);l?l.qty+=q:cart.push({id:p.id,qty:q});for(let i=0;i<q;i++)order.push(p.id);log(src,val,p.id);toast('+'+q+' '+p.name);rc()}
+function rm(){const id=order.pop();if(!id)return toast('Cart is empty',1);const l=cart.find(x=>x.id==id);if(--l.qty<=0)cart=cart.filter(x=>x!==l);toast('Removed 1 '+prod(id).name);rc()}
+const tot=()=>{let sub=0,tx=0,ag=0,n=0;cart.forEach(l=>{const p=prod(l.id),a=p.price*l.qty;sub+=a;n+=l.qty;if(p.tx)tx+=a;if(p.ag)ag=1});const t=Math.floor((tx*Math.round(CF.tax*100)+5000)/10000);return{sub,tax:t,total:sub+t,ag,n}};
+function rc(){const t=tot();$('#cl').innerHTML=cart.length?cart.map(l=>{const p=prod(l.id);return`<tr><td>${l.qty}×</td><td>${esc(p.name)}${p.ag?' <small class="mu">18+</small>':''}</td><td class="r">${m$(p.price*l.qty)}</td></tr>`}).join(''):'<tr><td class="mu">Show an item or barcode to the camera, or type a barcode</td></tr>';
+$('#tt').innerHTML=`Subtotal ${m$(t.sub)} · Tax ${m$(t.tax)}<br><b class="big">${m$(t.total)}</b> <span class="mu">${t.n} item${t.n==1?'':'s'}</span>`;$('#mc').innerHTML='🛒 <b>'+t.n+'</b> item'+(t.n==1?'':'s')+' · <b>'+m$(t.total)+'</b>'}
+/* ---------- barcode ---------- */
+let det=null;try{if('BarcodeDetector' in window)det=new BarcodeDetector({formats:['ean_13','upc_a','ean_8','code_128','upc_e']})}catch(e){}
+const zc=document.createElement('canvas');let mf=null;
+function zx(){if(!window.ZXing)return[];try{if(!mf){const h=new Map();h.set(ZXing.DecodeHintType.TRY_HARDER,true);h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.CODE_128]);mf=new ZXing.MultiFormatReader();mf.setHints(h)}
+zc.width=v.videoWidth;zc.height=v.videoHeight;zc.getContext('2d').drawImage(v,0,0);return[mf.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(zc)))).getText()]}catch(e){return[]}}
+const readCodes=async()=>{let r=[];if(det){try{r=(await det.detect(v)).map(b=>b.rawValue)}catch(e){}}if(!r.length)r=scanFrame(v);if(!r.length)r=zx();return r};
+const seen={};
+function onCode(raw,manual){const c=nb(raw);$('#cm').textContent='Barcode read: '+c;if(!ean(c))return toast('Bad barcode check digit',1);const n=Date.now(),f=n-(seen[c]||0)>1500;seen[c]=n;if(!f&&!manual)return;const p=P.find(x=>x.bc&&nb(x.bc)==c);p?add(p,1,manual?'manual':'barcode',c):(log('barcode',c,null),toast('Unknown barcode '+c,1))}
+/* ---------- vision: colour/layout signature + nearest neighbour ---------- */
+const v=$('#v'),fc=document.createElement('canvas');fc.width=fc.height=32;const fx=fc.getContext('2d',{willReadFrequently:true});
+const roi=()=>{const w=v.videoWidth,h=v.videoHeight,s=Math.min(w,h)*.6;return[(w-s)/2,(h-s)/2,s]};
+function feat(){const[x,y,s]=roi();fx.drawImage(v,x,y,s,s,0,0,32,32);const d=fx.getImageData(0,0,32,32).data,g=new Array(192).fill(0),h=new Array(16).fill(0);let m=0;
+for(let j=0;j<32;j++)for(let i=0;i<32;i++){const k=(j*32+i)*4,r=d[k],gg=d[k+1],b=d[k+2],q=((j>>2)*8+(i>>2))*3;g[q]+=r;g[q+1]+=gg;g[q+2]+=b;m+=r+gg+b;
+const mx=Math.max(r,gg,b),dd=mx-Math.min(r,gg,b),sat=mx?dd/mx:0;if(sat>.15){const hu=mx==r?((gg-b)/dd+6)%6:mx==gg?(b-r)/dd+2:(r-gg)/dd+4;h[Math.min(15,Math.floor(hu/6*16))]+=sat}}
+m=m/3072||1;const hs=h.reduce((a,b)=>a+b,0)||1;return g.map(a=>a/16/m/2).concat(h.map(a=>a/hs*2))}
+function cls(f,skip){const b=[];for(const s of SM){if(skip&&s.ss===skip)continue;let d=0;for(let i=0;i<f.length;i++){const x=s.f[i]-f[i];d+=x*x}b.push([d,s.l])}
+if(!b.length)return null;b.sort((a,c)=>a[0]-c[0]);const k=b.slice(0,5),d0=Math.sqrt(k[0][0]),vt={};k.forEach(x=>{if(Math.sqrt(x[0])<=CF.md*1.25)vt[x[1]]=(vt[x[1]]||0)+1});
+const e=Object.entries(vt).sort((a,c)=>c[1]-a[1])[0];return{l:e&&d0<=CF.md&&e[1]>=3?e[0]:'?',d:d0}}
+const live=()=>tab==0&&!$('#m1').classList.contains('on')&&!$('#m2').classList.contains('on');
+async function tick(){if(!v.videoWidth||document.hidden)return;tk++;const o=$('#o'),x=o.getContext('2d');if(o.width!=v.videoWidth){o.width=v.videoWidth;o.height=v.videoHeight}x.clearRect(0,0,o.width,o.height);
+const[rx,ry,rs]=roi();let col='#fff',txt='',lab=null;
+if(SM.length>=5){const r=cls(feat());if(r){const ig=r.l[0]=='_'||r.l=='?';lab=ig?null:r.l;col=lab?'#22c55e':'#f59e0b';txt=r.l+'  d='+r.d.toFixed(2)}}
+x.lineWidth=4;x.strokeStyle=col;x.strokeRect(rx,ry,rs,rs);x.fillStyle=col;x.font='bold 22px system-ui';x.fillText(txt,rx+6,ry-8);
+const lv=live(),bv=lv||(tab==4&&!$('#m1').classList.contains('on')&&!$('#m2').classList.contains('on'));vh.push(lab);if(vh.length>20)vh.shift();
+if(lv&&lab&&vh.length>=8&&vh.slice(-8).every(q=>q===lab)&&lat!==lab){lat=lab;const p=P.find(q=>q.lb===lab);p&&add(p,1,'vision',lab)}
+if(lat&&vh.length>=20&&!vh.includes(lat))lat=null;
+if(bv&&!busy){busy=1;try{(await readCodes()).forEach(c=>onCode(c))}catch(e){}busy=0}}
+setInterval(tick,100);
+$('#sc').onclick=async()=>{try{v.srcObject=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},facingMode:'environment'},audio:false});await v.play();$('#cm').textContent=det||window.ZXing?'Camera on.':'Camera on, but no barcode decoder loaded: type barcodes instead.';$('#sc').textContent='Camera running'}catch(e){$('#cm').textContent='Camera unavailable ('+e.name+'). Allow camera access, use https, or open this page in its own tab.'}};
+/* ---------- cash out ---------- */
+function rpay(){const t=tot(),d=cash-t.total;$('#pd').innerHTML=`Total due <b>${m$(t.total)}</b><br>Cash given <b class="big">${m$(cash)}</b><br>`+(d>=0?`<span class="ok">Change ${m$(d)}</span>`:`<span class="bad">Short ${m$(-d)}</span>`)}
+function pay(){if(!cart.length)return toast('Cart is empty',1);cash=0;$('#ag').checked=false;$('#agw').hidden=!tot().ag;rpay();$('#m1').classList.add('on')}
+function kp(k){cash=k=='⌫'?Math.floor(cash/10):Math.min(cash*(k=='00'?100:10)+(k=='00'?0:+k),9999999);rpay()}
+const rtxt=t=>{const W=38,pad=(a,b)=>a.slice(0,W-b.length-1).padEnd(W-b.length)+b;return['GROCERY CONCEPT STORE','Receipt #'+String(t.id).padStart(6,'0'),new Date(t.ts).toLocaleString(),'-'.repeat(W),...t.L.map(l=>pad(l.q+' x '+l.n,m$(l.q*l.u))),'-'.repeat(W),pad('Subtotal',m$(t.sub)),pad('Tax',m$(t.tax)),pad('TOTAL',m$(t.total)),pad('Cash',m$(t.cash)),pad('Change',m$(t.chg)),'-'.repeat(W),'Thank you!'].join('\n')};
+const showR=t=>{$('#rx').textContent=rtxt(t);$('#m2').classList.add('on')};
+function done(){const t=tot();if(cash<t.total)return toast('Short '+m$(t.total-cash),1);if(t.ag&&!$('#ag').checked)return toast('Staff must confirm the age check',1);
+const tx={id:(SA.length?SA[SA.length-1].id:0)+1,ts:new Date().toISOString(),sub:t.sub,tax:t.tax,total:t.total,cash,chg:cash-t.total,ag:t.ag,L:cart.map(l=>{const p=prod(l.id);return{pid:p.id,n:p.name,q:l.qty,u:p.price,t:p.tx}})};
+cart.forEach(l=>{prod(l.id).st-=l.qty});SA.push(tx);sv();cart=[];order=[];vh=[];lat=null;$('#m1').classList.remove('on');rc();showR(tx)}
+/* ---------- products ---------- */
+function rpd(){$('#pl').innerHTML=P.map(p=>`<tr><td>${esc(p.name)}${p.ag?' 🔞':''}${p.tx?' <small class="mu">tax</small>':''}</td><td><input size="5" value="${(p.price/100).toFixed(2)}" onchange="up(${p.id},'price',this.value)"></td><td><small>${esc(p.bc||'-')}<br>${esc(p.lb||'-')}</small></td><td><input size="4" type="number" value="${p.st}" onchange="up(${p.id},'st',this.value)"></td><td><button class="d" onclick="dl(this,${p.id})">✕</button></td></tr>`).join('');
+$('#tx').value=CF.tax;$('#ll').innerHTML=[...new Set([...P.map(p=>p.lb).filter(Boolean),'_empty','_other'])].map(x=>`<option value="${esc(x)}">`).join('')}
+function up(id,k,x){const p=prod(id);if(k=='price'){const c=pp(x);if(!(c>=0))return toast('Invalid price',1);p.price=c}else p.st=parseInt(x)||0;sv();rc()}
+function dl(b,id){arm(b,()=>{P=P.filter(p=>p.id!=id);cart=cart.filter(l=>l.id!=id);order=order.filter(i=>i!=id);sv();rpd();rc()})}
+$('#adb').onclick=()=>{const n=$('#an').value.trim(),c=pp($('#ap').value),b=$('#ac').value.trim()?nb($('#ac').value):'',l=$('#al').value.trim();if(!n||!(c>=0))return toast('Name and a valid price are required',1);
+if((b&&P.some(p=>p.bc&&nb(p.bc)==b))||(l&&P.some(p=>p.lb==l)))return toast('Duplicate barcode or label',1);
+P.push({id:Math.max(0,...P.map(p=>p.id))+1,name:n,price:c,bc:b,lb:l,tx:$('#at').checked?1:0,ag:$('#aa').checked?1:0,st:parseInt($('#as').value)||0});['an','ap','ac','al','as'].forEach(i=>$('#'+i).value='');sv();rpd();toast('Added '+n)};
+$('#tx').onchange=e=>{CF.tax=Math.max(0,+e.target.value||0);sv();rc()};
+$('#ex').onclick=()=>{$('#bk').value=JSON.stringify({P,SA,SM,CF})};
+$('#im').onclick=()=>{try{const d=JSON.parse($('#bk').value);if(!Array.isArray(d.P)||!Array.isArray(d.SA)||!Array.isArray(d.SM))throw 0;P=d.P;SA=d.SA;SM=d.SM;CF=Object.assign(CF,d.CF||{});sv();rpd();rc();rt();toast('Imported')}catch(e){toast('Invalid backup',1)}};
+$('#rst').onclick=e=>arm(e.target,()=>{['p','s','m','e','c'].forEach(k=>{try{localStorage.removeItem('gk_'+k)}catch(x){}});location.reload()});
+/* ---------- training ---------- */
+function bur(on){if(on){const L=$('#lb2').value.trim();if(!L)return toast('Enter a label first',1);if(!v.videoWidth)return toast('Start the camera first',1);const ss=Date.now();bt=setInterval(()=>{SM.push({l:L,ss,f:feat().map(x=>+x.toFixed(3))});rt()},250);$('#bu').textContent='Stop burst'}else{clearInterval(bt);bt=null;$('#bu').textContent='Start burst';sv()}}
+$('#bu').onclick=()=>bur(!bt);
+$('#c1').onclick=()=>{const l=$('#lb2').value.trim();if(!l||!v.videoWidth)return toast('Start the camera and enter a label',1);SM.push({l,ss:Math.floor(Date.now()/6e5),f:feat().map(x=>+x.toFixed(3))});sv();rt()};
+$('#t2').addEventListener('click',e=>{const q=e.target.dataset.q;if(q&&e.target.tagName=='BUTTON')$('#lb2').value=q});
+function rt(){rgd();const g={};SM.forEach(s=>{const o=g[s.l]=g[s.l]||{n:0,ss:new Set()};o.n++;o.ss.add(s.ss)});
+$('#tl').innerHTML=Object.entries(g).map(([l,o])=>`<tr><td>${esc(l)}</td><td>${o.n}${o.n<40?' ⚠':''}</td><td>${o.ss.size}${o.ss.size<3?' ⚠':''}</td><td><button class="d" data-l="${esc(l)}">✕</button></td></tr>`).join('')||'<tr><td class="mu">No samples yet</td></tr>';
+$('#tw').textContent=SM.length?(g._empty?'':'Missing “_empty” (nothing in the square). ')+(g._other?'':'No “_other” (random non-catalog objects). ')+'⚠ = aim for 40+ images and 3+ sessions per label.':''}
+$('#tl').onclick=e=>{const b=e.target.closest('button');if(b)arm(b,()=>{SM=SM.filter(s=>s.l!=b.dataset.l);sv();rt()})};
+$('#evb').onclick=()=>{const ses={};SM.forEach(s=>(ses[s.l]=ses[s.l]||new Set()).add(s.ss));const T=SM.filter(s=>ses[s.l].size>1),r={};
+(T.length>300?T.filter(()=>Math.random()<300/T.length):T).forEach(s=>{const o=cls(s.f,s.ss),a=r[s.l]=r[s.l]||[0,0];a[1]++;if(o&&o.l===s.l)a[0]++});
+const skipped=Object.keys(ses).filter(l=>ses[l].size<2);
+$('#ev').innerHTML=(Object.entries(r).map(([l,a])=>`${esc(l)}: <b>${Math.round(a[0]/a[1]*100)}%</b> correct (${a[1]} tested)`).join('<br>')||'Nothing to test yet.')+(skipped.length?`<br><span class="mu">Skipped (need 2+ sessions): ${skipped.map(esc).join(', ')}</span>`:'')};
+/* ---------- reports ---------- */
+function rr(){const d=$('#rd').value||ld(Date.now()),T=SA.filter(t=>ld(t.ts)==d),sum=T.reduce((a,t)=>a+t.total,0),tx=T.reduce((a,t)=>a+t.tax,0),it={};
+T.forEach(t=>t.L.forEach(l=>{const o=it[l.n]=it[l.n]||[0,0];o[0]+=l.q;o[1]+=l.q*l.u}));
+$('#rs').innerHTML=`<b>${T.length}</b> sales · <b>${m$(sum)}</b> · tax ${m$(tx)} · avg basket ${m$(T.length?Math.floor(sum/T.length):0)}`;
+$('#ri').innerHTML=Object.entries(it).sort((a,b)=>b[1][0]-a[1][0]).map(([n,a])=>`<tr><td>${esc(n)}</td><td>${a[0]}</td><td class="r">${m$(a[1])}</td></tr>`).join('')||'<tr><td class="mu">No sales on this day</td></tr>';
+const lo=P.filter(p=>p.st<=5);$('#rl').textContent=lo.length?'Low or negative stock: '+lo.map(p=>p.name+' ('+p.st+')').join(', '):'';
+$('#rv').innerHTML=T.slice(-15).reverse().map(t=>`<button data-r="${t.id}">#${t.id} ${m$(t.total)}</button>`).join(' ')||'none';
+$('#re').innerHTML=EV.slice(-12).reverse().map(e=>`<tr><td>${new Date(e.t).toLocaleTimeString()}</td><td>${esc(e.s)}</td><td>${esc(e.v)}</td></tr>`).join('')}
+$('#rd').onchange=rr;$('#rv').onclick=e=>{const id=e.target.dataset.r;if(id)showR(SA.find(t=>t.id==id))};
+/* ---------- guided training list ---------- */
+function rgd(){const g={};SM.forEach(s=>{const o=g[s.l]=g[s.l]||{n:0,ss:new Set()};o.n++;o.ss.add(s.ss)});
+const rows=[{l:'_empty',n:'Empty scan zone (required)'},{l:'_other',n:'Random other objects (recommended)'},...P.map(p=>({l:p.lb,n:p.name,id:p.id}))];
+$('#gd').innerHTML='<table><tbody>'+rows.map(r=>{if(!r.l)return`<tr><td>${esc(r.n)}</td><td class="mu">no vision label</td><td><button data-sl="${r.id}">Set label</button></td></tr>`;const o=g[r.l]||{n:0,ss:new Set()};
+return`<tr><td>${esc(r.n)}<br><small class="mu">${esc(r.l)}</small></td><td style="min-width:100px"><progress max="100" value="${Math.min(100,Math.round(o.n/40*100))}" style="width:100%"></progress><small>${o.n}/40 · ${o.ss.size} session${o.ss.size==1?'':'s'}</small></td><td><button data-cl="${esc(r.l)}">Train</button></td></tr>`}).join('')+'</tbody></table>'}
+$('#gd').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+if(b.dataset.cl){$('#lb2').value=b.dataset.cl;toast('Hold '+b.dataset.cl+' in the green square, then press Start burst');$('#bu').scrollIntoView({block:'center',behavior:'smooth'})}
+else if(b.dataset.sl){const p=prod(b.dataset.sl),l=p.name.toLowerCase().replace(/\(.*?\)/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'item'+p.id;let n=l,k=2;while(P.some(q=>q.lb==n))n=l+'_'+k++;p.lb=n;sv();rpd();rt()}};
+/* ---------- barcode generator (EAN-13 as SVG) ---------- */
+const EL=['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'],EG=['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'],ER=['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'],EP=['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];
+const ck=s=>{let t=0;for(let i=0;i<12;i++)t+=+s[i]*(i%2?3:1);return(10-t%10)%10};
+function eanSvg(c){const b='101'+[...c.slice(1,7)].map((d,i)=>(EP[+c[0]][i]=='L'?EL:EG)[+d]).join('')+'01010'+[...c.slice(7)].map(d=>ER[+d]).join('')+'101';let r='',i=0;
+while(i<95){if(b[i]=='1'){let j=i;while(j<95&&b[j]=='1')j++;r+=`<rect x="${i+10}" y="6" width="${j-i}" height="62"/>`;i=j}else i++}
+return`<svg viewBox="0 0 115 90" xmlns="http://www.w3.org/2000/svg"><rect width="115" height="90" fill="#fff"/><g fill="#000" shape-rendering="crispEdges">${r}</g><text x="57.5" y="84" font-size="10" text-anchor="middle" font-family="monospace" fill="#000">${c}</text></svg>`}
+function rbcOld(){$('#bl').innerHTML=P.map(p=>{const c=p.bc?nb(p.bc):'',ok=/^\d{13}$/.test(c)&&ean(c);return`<div class="bc">${ok?eanSvg(c):`<p class="bad">${c?'Not a valid EAN-13 ('+esc(c)+')':'No barcode yet'}</p>`}<b>${esc(p.name)}</b><br>${m$(p.price)}</div>`}).join('')}
+const ebits=c=>'101'+[...c.slice(1,7)].map((d,i)=>(EP[+c[0]][i]=='L'?EL:EG)[+d]).join('')+'01010'+[...c.slice(7)].map(d=>ER[+d]).join('')+'101';
+function eanCv(c){const m=4,b=ebits(c),cv=document.createElement('canvas');cv.width=115*m;cv.height=90*m;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.fillStyle='#000';for(let i=0;i<95;i++)if(b[i]=='1')x.fillRect((i+10)*m,6*m,m,62*m);x.font='bold '+10*m+'px monospace';x.textAlign='center';x.fillText(c,57.5*m,84*m);return cv}
+const dec=async cv=>{let r=[];if(det){try{r=(await det.detect(cv)).map(b=>b.rawValue)}catch(e){}}if(!r.length)r=scanFrame(cv);if(r.length)return r;if(!window.ZXing)return[];try{if(!mf)zx();return[mf.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(cv)))).getText()]}catch(e){return[]}};
+function rbc(){$('#bl').innerHTML=P.map(p=>{const c=p.bc?nb(p.bc):'',ok=/^\d{13}$/.test(c)&&ean(c);return`<div class="bc">${ok?`<img alt="Barcode ${c}" src="${eanCv(c).toDataURL('image/png')}" style="width:100%;display:block">`:`<p class="bad">${c?'Not a valid EAN-13 ('+esc(c)+')':'No barcode yet'}</p>`}<b>${esc(p.name)}</b><br>${m$(p.price)}<br><small class="dc" data-c="${ok?c:''}">${ok?'checking…':''}</small></div>`}).join('');
+document.querySelectorAll('.dc').forEach(el=>{const c=el.dataset.c;if(c)dec(eanCv(c)).then(t=>{el.textContent=t.map(nb).includes(c)?'✓ scanner reads this':'✗ this browser could not read it'}).catch(()=>{el.textContent='✗ this browser could not read it'})})}
+$('#bf').onchange=async e=>{const f=e.target.files[0];if(!f)return;const o=$('#bfr');o.textContent='Reading…';try{const bm=await createImageBitmap(f),cv=document.createElement('canvas');cv.width=bm.width;cv.height=bm.height;cv.getContext('2d').drawImage(bm,0,0);const t=await dec(cv);if(!t.length)o.textContent='No barcode found in that image';else{o.textContent='Found '+t.join(', ');t.forEach(c=>onCode(c,1))}}catch(x){o.textContent='Could not read that image'}e.target.value=''};
+/* ---------- own barcode decoder ---------- */
+let PT=null;const sk=document.createElement('canvas');
+function pat(q,right){if(!PT){const f=s=>{const o=[];let c=s[0],n=0;for(const x of s){if(x==c)n++;else{o.push(n);c=x;n=1}}o.push(n);return o};PT={L:EL.map(f),G:EG.map(f),R:ER.map(f)}}
+const t=q[0]+q[1]+q[2]+q[3],u=q.map(x=>x*7/t);let best=1e9,res=null;
+const ts=(a,ch)=>a.forEach((p,d)=>{let e=0;for(let j=0;j<4;j++)e+=(u[j]-p[j])**2;if(e<best){best=e;res=[d,ch]}});
+if(right)ts(PT.R,'R');else{ts(PT.L,'L');ts(PT.G,'G')}return best<2.2?res:null}
+function eanRuns(r,i){const m=(r[i]+r[i+1]+r[i+2])/3;if(m<1.5)return null;for(let k=0;k<3;k++){if(r[i+k]<m*.5||r[i+k]>m*1.8)return null;const q=r[i+56+k];if(q<m*.5||q>m*1.8)return null}
+let t=0;for(let k=0;k<5;k++)t+=r[i+27+k];if(Math.abs(t/5-m)>m*.6)return null;
+let d='',par='';for(let h=0;h<2;h++)for(let k=0;k<6;k++){const o=h?i+32+k*4:i+3+k*4,v=pat(r.slice(o,o+4),h);if(!v)return null;d+=v[0];if(!h)par+=v[1]}
+const f=EP.indexOf(par);if(f<0)return null;const code=f+d;return ean(code)?code:null}
+function eanLine(r){const n=r.length,s=r.slice().sort(),lo=s[n*.05|0],hi=s[n*.95|0];if(hi-lo<50)return null;const th=(lo+hi)/2,runs=[];let c=r[0]<th?1:0,l=1;const c0=c;
+for(let i=1;i<n;i++){const b=r[i]<th?1:0;if(b==c)l++;else{runs.push(l);c=b;l=1}}runs.push(l);
+for(let i=0;i+59<=runs.length;i++){if((c0^(i&1))!=1)continue;const code=eanRuns(runs,i);if(code)return code}return null}
+function eanGray(g,w,h){const cnt={};for(let k=1;k<60;k++){const y=Math.min(h-2,Math.max(1,Math.round(h*k/60))),r=new Float32Array(w);for(let i=0;i<w;i++)r[i]=(g[(y-1)*w+i]+g[y*w+i]+g[(y+1)*w+i])/3;const c=eanLine(r)||eanLine(r.slice().reverse());if(c)cnt[c]=(cnt[c]||0)+1}return Object.keys(cnt).filter(c=>cnt[c]>=3)}
+function scanFrame(src){const w0=src.videoWidth||src.width,h0=src.videoHeight||src.height;if(!w0||!h0)return[];const sc=Math.min(1,1000/w0),w=Math.round(w0*sc),h=Math.round(h0*sc);sk.width=w;sk.height=h;const x=sk.getContext('2d',{willReadFrequently:true});x.drawImage(src,0,0,w,h);const d=x.getImageData(0,0,w,h).data,g=new Uint8Array(w*h);for(let i=0;i<w*h;i++)g[i]=(d[i*4]*77+d[i*4+1]*150+d[i*4+2]*29)>>8;return eanGray(g,w,h)}
+/* ---------- end decoder ---------- */
+$('#bg').onclick=()=>{let n=0;P.forEach(p=>{if(p.bc)return;let k=p.id,c;do{const s='200'+String(k++).padStart(9,'0');c=s+ck(s)}while(P.some(q=>q.bc&&nb(q.bc)==c));p.bc=c;n++});sv();rbc();rpd();toast(n?'Generated '+n+' barcode'+(n==1?'':'s'):'Every product already has a barcode')};
+$('#bp').onclick=()=>{document.body.classList.add('pb');try{window.print()}catch(e){document.body.classList.remove('pb');toast('Printing is blocked here: scan from the screen or open the page in its own tab',1)}};
+addEventListener('afterprint',()=>document.body.classList.remove('pb'));
+/* ---------- wiring ---------- */
+function tabTo(i){if(bt)bur(false);tab=i;[...$('#tb').children].forEach((b,j)=>b.classList.toggle('on',j==i));[0,1,2,3,4].forEach(j=>$('#t'+j).hidden=j!=i);[rc,rpd,rt,rr,rbc][i]()}
+$('#tb').onclick=e=>{const i=[...$('#tb').children].indexOf(e.target);if(i>=0)tabTo(i)};
+$('#pb').onclick=pay;$('#rb').onclick=rm;$('#cb').onclick=()=>{cart=[];order=[];rc()};
+$('#bb').onclick=()=>{const c=$('#bi').value.trim();if(c){onCode(c,1);$('#bi').value=''}};
+$('#bi').onkeydown=e=>{if(e.key=='Enter')$('#bb').click()};
+$('#md').value=CF.md;$('#mv').textContent=CF.md;$('#md').oninput=e=>{CF.md=+e.target.value;$('#mv').textContent=CF.md;S.s('c',CF)};
+$('#kp').innerHTML=['7','8','9','4','5','6','1','2','3','00','0','⌫'].map(k=>`<button data-k="${k}">${k}</button>`).join('');
+$('#kp').onclick=e=>{const k=e.target.dataset.k;if(k)kp(k)};
+$('#qk').onclick=e=>{const k=e.target.dataset.q;if(k){cash=k=='x'?tot().total:+k*100;rpay()}};
+$('#ok').onclick=done;$('#xc').onclick=()=>$('#m1').classList.remove('on');$('#x2').onclick=()=>$('#m2').classList.remove('on');
+$('#pr').onclick=()=>{try{window.print()}catch(e){toast('Printing is blocked here',1)}};
+addEventListener('keydown',e=>{if(!$('#m1').classList.contains('on'))return;if(/^\d$/.test(e.key))kp(e.key);else if(e.key=='Backspace'&&e.target.tagName!='INPUT')kp('⌫');else if(e.key=='Enter')done();else if(e.key=='Escape')$('#xc').click()});
+$('#rd').value=ld(Date.now());rc();rpd();rt();rr();
+</script></body></html>

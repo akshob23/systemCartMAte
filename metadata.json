@@ -1,0 +1,10 @@
+{
+  "name": "CartMate",
+  "description": "High-efficiency vision object tracking, instant barcode decoding, seamless real-time device synchronization, and camera-based object enrollment into a synced database.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

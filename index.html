@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Allow extension request interceptors to assign window.fetch without throwing "has only a getter"
+      (function() {
+        try {
+          var _origFetch = window.fetch;
+          if (_origFetch) {
+            Object.defineProperty(window, 'fetch', {
+              get: function() {
+                return _origFetch;
+              },
+              set: function(fn) {
+                _origFetch = fn;
+              },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {
+          try {
+            var proto = Object.getPrototypeOf(window);
+            if (proto) {
+              var _protoFetch = window.fetch;
+              Object.defineProperty(proto, 'fetch', {
+                get: function() { return _protoFetch; },
+                set: function(fn) { _protoFetch = fn; },
+                configurable: true,
+                enumerable: true
+              });
+            }
+          } catch (err) {}
+        }
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CartMate - Smart Grocery Checkout & Multi-Device Inventory</title>
+    <meta name="description" content="CartMate: High-efficiency vision object tracking, instant barcode decoding, seamless real-time device synchronization, and camera-based object enrollment into a synced database." />
+    <meta property="og:title" content="CartMate - Smart Grocery Checkout & Multi-Device Inventory" />
+    <meta property="og:description" content="CartMate: High-efficiency vision object tracking, instant barcode decoding, seamless real-time device synchronization, and camera-based object enrollment into a synced database." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
